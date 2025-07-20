@@ -1,5 +1,5 @@
 import { SafeAreaView } from "react-native-safe-area-context";
-import "./globals.css";
+import "@/app/globals.css";
 import { FlatList, Image, Pressable, TouchableOpacity, Text, View } from "react-native";
 import { images, offers } from "@/constants";
 import cn from "clsx";
