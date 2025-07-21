@@ -9,12 +9,15 @@ export const appwriteConfig={
 }
 
 export const client = new Client();
-client.setEndpoint(appwriteConfig.endpoint!).setProject(appwriteConfig.projectId!)
-.setPlatform(appwriteConfig.platform)
+
+client
+    .setEndpoint(appwriteConfig.endpoint)
+    .setProject(appwriteConfig.projectId)
+    .setPlatform(appwriteConfig.platform)
 
 export const account = new Account(client);
-export const database = new Databases(client);
-const avatar = new Avatars(client)
+export const databases = new Databases(client);
+const avatars = new Avatars(client);
 
 interface CreateUserParams{
     name:string,
@@ -22,23 +25,24 @@ interface CreateUserParams{
     email:string
 }
 
-export const createUser= async ({email, password,name}:CreateUserParams)=>{
-    try{
+export const createUser = async ({ email, password, name }: CreateUserParams) => {
+    try {
         const newAccount = await account.create(ID.unique(), email, password, name)
-        if (!newAccount) throw Error
+        if(!newAccount) throw Error;
 
-        await signIn({email,password});
-        const avatarUrl = avatar.getInitialsURL(name)
-        const newUser= await database.createDocument(appwriteConfig.databaseId,appwriteConfig.userCollectionId,ID.unique(),
-        {
-            email,
-            name,
-            password,
-            avatar:avatarUrl,
-            accountID : newAccount.$id
-        });
-        return newUser;
-        }catch(e){throw new Error(e as string)}
+        await signIn({ email, password });
+
+        const avatarUrl = avatars.getInitialsURL(name);
+
+        return await databases.createDocument(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            ID.unique(),
+            { email, name, accountId: newAccount.$id, avatar: avatarUrl }
+        );
+    } catch (e) {
+        throw new Error(e as string);
+    }
 }
 
 interface SignInParams{
@@ -46,20 +50,30 @@ interface SignInParams{
     password:string
 }
 
-export const signIn = async ({email,password}:SignInParams) => {
-    try{
-        const session = await account.createEmailPasswordSession(email,password)
-        return session;
-    }catch(e){throw new Error(e as string)}
+export const signIn = async ({ email, password }: SignInParams) => {
+    try {
+        const session = await account.createEmailPasswordSession(email, password);
+    } catch (e) {
+        throw new Error(e as string);
+    }
 }
-export const getUser = async () =>{
-    try{
-        const currentAccount = await account.get()
-        if(!currentAccount) throw Error
-        const currentUser = await database.listDocuments(appwriteConfig.databaseId,appwriteConfig.userCollectionId,
-            [Query.equal('accountID',currentAccount.$id)]
+
+export const getCurrentUser = async () => {
+    try {
+        const currentAccount = await account.get();
+        if(!currentAccount) throw Error;
+
+        const currentUser = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.userCollectionId,
+            [Query.equal('accountId', currentAccount.$id)]
         )
-        if (!currentUser) throw Error
+
+        if(!currentUser) throw Error;
+
         return currentUser.documents[0];
-    }catch(e){throw new Error(e as string)}
+    } catch (e) {
+        console.log(e);
+        throw new Error(e as string);
+    }
 }
