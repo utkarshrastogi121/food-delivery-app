@@ -1,4 +1,4 @@
-# 🍕 Food Delivery App (React Native)
+# 🍕 Food Delivery App 
 
 A mobile-first **Food Delivery App** built using **React Native (Expo)**, **Appwrite** for backend services, **Zustand** for state management, and **NativeWind** for styling.
 
